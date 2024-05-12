@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Description to category mapping",
+  "description": "Key-value map to convert transaction description to category",
+  "type": "object",
+  "properties": {
+    "mapping": {
+      "patternProperties": {
+        ".+": {
+          "type": "string",
+          "enum": [
+            "Streaming",
+            "Investing",
+            "Food",
+            "NonEssentialFood",
+            "VVE",
+            "Insurance",
+            "Mortgage",
+            "Internet",
+            "Shopping",
+            "Transportation",
+            "HouseItems",
+            "Hobby",
+            "Clothing",
+            "Sport",
+            "Tax",
+            "Income",
+            "CreditCard",
+            "InternalMoneyTransfer",
+            "Health",
+            "Entertainment",
+            "Gifts",
+            "Other"
+          ]
+        }
+      }
+    }
+  },
+  "required": ["mapping"]
+}

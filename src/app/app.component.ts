@@ -1,15 +1,18 @@
-import { Component } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {Transaction} from "./models/Transaction";
 import {TransactionsParserService} from "./services/transactions-parser.service";
+import {ITransactionDescriptionToCategoryMapping} from "./models/TransactionDescriptionToCategoryMap";
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   transactions: Transaction[] = [];
   title = 'cashflow';
+
+  transactionDescriptionToCategoryMap: Record<string, string> = {};
 
   private fileReader = new FileReader();
 
@@ -30,5 +33,14 @@ export class AppComponent {
 
       this.transactions = this.transactionsParser.getTransactions(fileContent);
     }
+  }
+
+  ngOnInit(): void {
+    fetch('/assets/mapping.json')
+        .then(res => res.json())
+        .then((res: ITransactionDescriptionToCategoryMapping) => this.transactionDescriptionToCategoryMap = res.mapping)
+        .catch(e => {
+            console.warn('Could not load mapping, place mapping.json in assets folder.', e);
+        })
   }
 }

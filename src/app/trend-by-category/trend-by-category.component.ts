@@ -1,6 +1,6 @@
 import {Component, Input, OnChanges, SimpleChanges} from '@angular/core';
 import {Transaction} from "../models/Transaction";
-import {TransactionCategory, TransactionDescriptionToCategoryMap} from "../models/TransactionDescriptionToCategoryMap";
+import { TransactionDescriptionMappingConstants } from "../models/TransactionDescriptionToCategoryMap";
 import {CategoryWithTransactions, TransactionsByCategory} from "../models/TransactionsByCategory";
 import {ISpendingTable} from "../models/spending-table/SpendingTable";
 
@@ -21,12 +21,15 @@ export class TrendByCategoryComponent implements OnChanges {
   @Input()
   public showIncomeInsteadOfExpenses = false;
 
+  @Input()
+  transactionDescriptionToCategoryMap: Record<string, string> = {};
+
   private getMonthNamesFromTransactions(transactions: Transaction[]){
     return [...new Set(transactions.map(t => t.monthName))];
   }
 
   private setDatasets(transactions: Transaction[]) {
-    const spendingByCategoryAndPeriod: Partial<Record<TransactionCategory, { [periodName: string]: Transaction[] }>> = {};
+    const spendingByCategoryAndPeriod: Partial<Record<string, { [periodName: string]: Transaction[] }>> = {};
 
     const transactionsForDataset = transactions.filter(t => this.showIncomeInsteadOfExpenses && t.amountOfCents > 0 || !this.showIncomeInsteadOfExpenses && t.amountOfCents < 0);
 
@@ -55,11 +58,11 @@ export class TrendByCategoryComponent implements OnChanges {
       totalTransactionCount: transactionsForDataset.length
     };
 
-    this.transactionsWithUnknownCategory = getTransactionCategories.find(c => c.name === TransactionCategory.Other)?.transactions || [];
+    this.transactionsWithUnknownCategory = getTransactionCategories.find(c => c.name === TransactionDescriptionMappingConstants.UnknownCategory)?.transactions || [];
 
     this.spendingTable.headerNames = ['Category', ...this.getMonthNamesFromTransactions(transactionsForDataset), 'Total'];
-    this.spendingTable.rows =  Object.keys(spendingByCategoryAndPeriod).map((categoryName, index) => {
-      const transactionsByMonth = Object.values(spendingByCategoryAndPeriod[categoryName as TransactionCategory]!)
+    this.spendingTable.rows =  Object.keys(spendingByCategoryAndPeriod).map((categoryName) => {
+      const transactionsByMonth = Object.values(spendingByCategoryAndPeriod[categoryName]!)
         .map(transactionsInMonth => ({
           transactions: transactionsInMonth,
           totalInCents: transactionsInMonth.reduce((acc, cur) => acc + cur.amountOfCents, 0)
@@ -105,7 +108,7 @@ export class TrendByCategoryComponent implements OnChanges {
     }
   }
 
-  private getCategory(transaction: Transaction): TransactionCategory {
-    return TransactionDescriptionToCategoryMap[transaction.targetAccountName] || TransactionCategory.Other;
+  private getCategory(transaction: Transaction): string {
+    return this.transactionDescriptionToCategoryMap[transaction.targetAccountName] || TransactionDescriptionMappingConstants.UnknownCategory;
   }
 }
