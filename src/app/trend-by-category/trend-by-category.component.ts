@@ -126,7 +126,7 @@ export class TrendByCategoryComponent implements OnChanges {
 
     this.transactionsWithUnknownCategory = getTransactionCategories.find(c => c.name === TransactionDescriptionMappingConstants.UnknownCategory)?.transactions || [];
 
-    this.spendingTable.columns = [{label: 'Category', isSummaryColumn: true}, {label: 'Total', isSummaryColumn: true}, {label: 'Average', isSummaryColumn: true}, ...this.getMonthColumnsFromTransactions(transactionsForDataset)];
+    this.spendingTable.columns = [{label: 'Category', isSummaryColumn: true}, {label: 'Average', isSummaryColumn: true}, {label: 'Total', isSummaryColumn: true}, ...this.getMonthColumnsFromTransactions(transactionsForDataset)];
     this.spendingTable.rows =  Object.keys(spendingByCategoryAndPeriod).map((categoryName) => {
       const transactionsByMonth = Object.values(spendingByCategoryAndPeriod[categoryName]!)
         .map(transactionsInMonth => ({
@@ -142,8 +142,8 @@ export class TrendByCategoryComponent implements OnChanges {
         rowTitle: categoryName,
         isExpanded: false,
         cells: [
-          {transactions: [], isSummaryCell: true, totalInCents: totalCentsForMonth},
           {transactions: [], isSummaryCell: true, totalInCents: averageCentsForMonths},
+          {transactions: [], isSummaryCell: true, totalInCents: totalCentsForMonth},
           ...transactionsByMonth
         ],
         totalInCents: totalCentsForMonth,
