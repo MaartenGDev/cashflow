@@ -1,3 +1,27 @@
+<div class="fixed top-0 bottom-0 right-0 left-0" *ngIf="currentRowToShowChartFor">
+  <div class="bg-black opacity-10 absolute h-full w-full" (click)="currentRowToShowChartFor = null"></div>
+  <div class="flex justify-center items-center h-full w-full">
+    <div class="bg-white p-6 relative">
+      <div class="absolute right-2 top-2" (click)="currentRowToShowChartFor = null">
+        <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g id="Menu / Close_SM">
+            <path id="Vector" d="M16 16L12 12M12 12L8 8M12 12L16 8M12 12L8 16" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="mt-4">
+        <canvas
+                baseChart
+                [data]="lineChartData"
+                [options]="lineChartOptions"
+                [type]="'line'"
+                height="400px"
+                width="800px"
+        ></canvas>
+      </div>
+    </div>
+  </div>
+</div>
 <div>
   <h1 class="text-2xl font-bold">{{showIncomeInsteadOfExpenses ? 'Income' : 'Expenses'}} </h1>
   <div class="border rounded-lg shadow overflow-y-auto bg-white mt-4">
@@ -29,7 +53,12 @@
                   </g>
                 </svg>
               </span>
-            <span class="ml-4">{{row.rowTitle}}</span>
+               <span class="ml-4" (click)="showChartForRow($event, spendingTable, row)">
+                <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="stroke-gray-400">
+                <path d="M21 21H6.2C5.07989 21 4.51984 21 4.09202 20.782C3.71569 20.5903 3.40973 20.2843 3.21799 19.908C3 19.4802 3 18.9201 3 17.8V3M7 15L12 9L16 13L21 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="ml-4">{{row.rowTitle}}</span>
             </span>
           </td>
           <td class="p-4 text-sm text-gray-800" [ngClass]="{'font-bold': last}"

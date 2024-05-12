@@ -2,7 +2,8 @@ import {Component, Input, OnChanges, SimpleChanges} from '@angular/core';
 import {Transaction} from "../models/Transaction";
 import { TransactionDescriptionMappingConstants } from "../models/TransactionDescriptionToCategoryMap";
 import {CategoryWithTransactions, TransactionsByCategory} from "../models/TransactionsByCategory";
-import {ISpendingTable} from "../models/spending-table/SpendingTable";
+import {ISpendingTable, ISpendingTableRow} from "../models/spending-table/SpendingTable";
+import {ChartConfiguration, TooltipItem} from "chart.js";
 
 @Component({
   selector: 'app-trend-by-category',
@@ -23,6 +24,37 @@ export class TrendByCategoryComponent implements OnChanges {
 
   @Input()
   transactionDescriptionToCategoryMap: Record<string, string> = {};
+
+  currentRowToShowChartFor: ISpendingTableRow|null =null;
+
+  private yAxisEuroFormatter: Intl.NumberFormat = new Intl.NumberFormat("nl-NL");
+  private euroFormatter: Intl.NumberFormat = new Intl.NumberFormat("nl-NL", {minimumFractionDigits: 2});
+
+  public lineChartData: ChartConfiguration['data'] = {
+    datasets: []
+  };
+
+  public lineChartOptions: ChartConfiguration['options'] = {
+    scales: {
+      y: {
+        ticks: {
+          callback: (value, index, ticks)=> {
+            return '€ ' + this.yAxisEuroFormatter.format(value as number);
+          }
+        }
+      }
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (tooltipItem: TooltipItem<"line">): string | string[] | void => {
+            return ' Total: € ' + this.euroFormatter.format(tooltipItem.dataset.data[tooltipItem.dataIndex] as number);
+          },
+          footer: this.buildTooltip.bind(this),
+        }
+      }
+    }
+  };
 
   private getMonthNamesFromTransactions(transactions: Transaction[]){
     return [...new Set(transactions.map(t => t.monthName))];
@@ -110,5 +142,30 @@ export class TrendByCategoryComponent implements OnChanges {
 
   private getCategory(transaction: Transaction): string {
     return this.transactionDescriptionToCategoryMap[transaction.targetAccountName] || TransactionDescriptionMappingConstants.UnknownCategory;
+  }
+
+  showChartForRow(event: Event, table: ISpendingTable, row: ISpendingTableRow) {
+    event.stopPropagation();
+    this.currentRowToShowChartFor = row;
+
+    this.lineChartData = {
+      datasets: [
+        {
+          data: row.cells
+              .slice(0, table.headerNames.length - 2)
+              .map(c => Math.abs(c.totalInCents / 100)),
+          label: row.rowTitle
+        }
+      ],
+      labels: table.headerNames.slice(1).slice(0, table.headerNames.length - 2)
+    };
+  }
+
+  private buildTooltip(tooltipItems: TooltipItem<"line">[]) {
+    const firstTooltip = tooltipItems[0];
+    const transactionsForCurrentPoint = this.currentRowToShowChartFor!.cells[firstTooltip.dataIndex].transactions;
+
+    return transactionsForCurrentPoint
+        .map(t => `€ ${this.euroFormatter.format(Math.abs(t.amountOfCents / 100))} ${t.targetAccountName}`)
   }
 }
