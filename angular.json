@@ -68,10 +68,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "cashflow:build:production"
+              "buildTarget": "cashflow:build:production"
             },
             "development": {
-              "browserTarget": "cashflow:build:development"
+              "buildTarget": "cashflow:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -79,7 +79,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "cashflow:build"
+            "buildTarget": "cashflow:build"
           }
         },
         "test": {
