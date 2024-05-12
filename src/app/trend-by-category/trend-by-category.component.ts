@@ -2,7 +2,7 @@ import {Component, Input, OnChanges, SimpleChanges} from '@angular/core';
 import {Transaction} from "../models/Transaction";
 import { TransactionDescriptionMappingConstants } from "../models/TransactionDescriptionToCategoryMap";
 import {CategoryWithTransactions, TransactionsByCategory} from "../models/TransactionsByCategory";
-import {ISpendingTable, ISpendingTableRow} from "../models/spending-table/SpendingTable";
+import {ISpendingTable, ISpendingTableColumn, ISpendingTableRow} from "../models/spending-table/SpendingTable";
 import {ChartConfiguration, Color, Plugin, TooltipItem} from "chart.js";
 import ChartDataLabels, {Context} from 'chartjs-plugin-datalabels';
 
@@ -16,7 +16,7 @@ export class TrendByCategoryComponent implements OnChanges {
   public spendingSummaryByCategory: {totalInCents: number; byCategory: CategoryWithTransactions[], totalTransactionCount: number} = {totalInCents: 0, byCategory: [], totalTransactionCount: 0};
   public transactionsWithUnknownCategory: Transaction[] = [];
 
-  public spendingTable: ISpendingTable = {headerNames: [], rows: []};
+  public spendingTable: ISpendingTable = {columns: [], rows: []};
 
   @Input()
   public transactions: Transaction[] = [];
@@ -89,8 +89,9 @@ export class TrendByCategoryComponent implements OnChanges {
     ChartDataLabels
   ];
 
-  private getMonthNamesFromTransactions(transactions: Transaction[]){
-    return [...new Set(transactions.map(t => t.monthName))];
+  private getMonthColumnsFromTransactions(transactions: Transaction[]): ISpendingTableColumn[] {
+    return [...new Set(transactions.map(t => t.monthName))]
+        .map(monthName => ({label: monthName, isSummaryColumn: false}));
   }
 
   private setDatasets(transactions: Transaction[]) {
@@ -98,14 +99,14 @@ export class TrendByCategoryComponent implements OnChanges {
 
     const transactionsForDataset = transactions.filter(t => this.showIncomeInsteadOfExpenses && t.amountOfCents > 0 || !this.showIncomeInsteadOfExpenses && t.amountOfCents < 0);
 
-    const monthNames = this.getMonthNamesFromTransactions(transactionsForDataset);
+    const monthColumns = this.getMonthColumnsFromTransactions(transactionsForDataset);
     const categories = new Set(transactionsForDataset.map(t => this.getCategory(t)));
 
     for (const categoryName of categories) {
       spendingByCategoryAndPeriod[categoryName] = {};
 
-      monthNames.forEach(monthName => {
-        spendingByCategoryAndPeriod[categoryName]![monthName] = [];
+      monthColumns.forEach(monthColumn => {
+        spendingByCategoryAndPeriod[categoryName]![monthColumn.label] = [];
       })
     }
 
@@ -125,21 +126,28 @@ export class TrendByCategoryComponent implements OnChanges {
 
     this.transactionsWithUnknownCategory = getTransactionCategories.find(c => c.name === TransactionDescriptionMappingConstants.UnknownCategory)?.transactions || [];
 
-    this.spendingTable.headerNames = ['Category', ...this.getMonthNamesFromTransactions(transactionsForDataset), 'Total'];
+    this.spendingTable.columns = [{label: 'Category', isSummaryColumn: true}, {label: 'Total', isSummaryColumn: true}, {label: 'Average', isSummaryColumn: true}, ...this.getMonthColumnsFromTransactions(transactionsForDataset)];
     this.spendingTable.rows =  Object.keys(spendingByCategoryAndPeriod).map((categoryName) => {
       const transactionsByMonth = Object.values(spendingByCategoryAndPeriod[categoryName]!)
         .map(transactionsInMonth => ({
+          isSummaryCell: false,
           transactions: transactionsInMonth,
           totalInCents: transactionsInMonth.reduce((acc, cur) => acc + cur.amountOfCents, 0)
         }));
+
+      const totalCentsForMonth = transactionsByMonth.reduce((acc, cur) => acc + cur.totalInCents, 0);
+      const averageCentsForMonths = transactionsByMonth.reduce((acc, cur) => acc + cur.totalInCents, 0)/transactionsByMonth.length;
 
       return {
         rowTitle: categoryName,
         isExpanded: false,
         cells: [
-          ...transactionsByMonth,
-          {transactions: [], totalInCents: transactionsByMonth.reduce((acc, cur) => acc + cur.totalInCents, 0)}
-        ]
+          {transactions: [], isSummaryCell: true, totalInCents: totalCentsForMonth},
+          {transactions: [], isSummaryCell: true, totalInCents: averageCentsForMonths},
+          ...transactionsByMonth
+        ],
+        totalInCents: totalCentsForMonth,
+        averageInCents: averageCentsForMonths
       }
     });
 
@@ -185,7 +193,7 @@ export class TrendByCategoryComponent implements OnChanges {
       datasets: [
         {
           data: row.cells
-              .slice(0, table.headerNames.length - 2)
+              .filter(c => !c.isSummaryCell)
               .map(c => Math.abs(c.totalInCents / 100)),
           label: row.rowTitle,
           datalabels: {
@@ -194,13 +202,13 @@ export class TrendByCategoryComponent implements OnChanges {
           }
         }
       ],
-      labels: table.headerNames.slice(1).slice(0, table.headerNames.length - 2)
+      labels: table.columns.filter(c => !c.isSummaryColumn).map(c => c.label)
     };
   }
 
   private buildTooltip(tooltipItems: TooltipItem<"line">[]) {
     const firstTooltip = tooltipItems[0];
-    const transactionsForCurrentPoint = this.currentRowToShowChartFor!.cells[firstTooltip.dataIndex].transactions;
+    const transactionsForCurrentPoint = this.currentRowToShowChartFor!.cells.filter(c => !c.isSummaryCell)[firstTooltip.dataIndex].transactions;
 
     return transactionsForCurrentPoint
         .map(t => `€ ${this.twoFractionsFormatter.format(Math.abs(t.amountOfCents / 100))} ${t.targetAccountName}`)

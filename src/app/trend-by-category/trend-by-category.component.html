@@ -2,9 +2,11 @@
   <div class="bg-black opacity-10 absolute h-full w-full" (click)="currentRowToShowChartFor = undefined"></div>
   <div class="flex justify-center items-center h-full w-full">
     <div class="bg-white p-6 relative">
-      <p><b>Trend for {{ currentRowToShowChartFor!.rowTitle }}</b></p>
+      <p class="text-xl"><b>Trend for {{ currentRowToShowChartFor!.rowTitle }}</b></p>
+      <p>Total: <span class="text-gray-500">{{currentRowToShowChartFor!.totalInCents | amountAsEuros |  currency: 'EUR'}}</span></p>
+      <p>Average: <span class="text-gray-500">{{currentRowToShowChartFor!.averageInCents | amountAsEuros |  currency: 'EUR'}}</span></p>
       <div class="absolute right-2 top-2" (click)="currentRowToShowChartFor = undefined">
-        <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="32px" height="32px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <g id="Menu / Close_SM">
             <path id="Vector" d="M16 16L12 12M12 12L8 8M12 12L16 8M12 12L8 16" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </g>
@@ -31,7 +33,7 @@
       <thead class="bg-gray-50">
       <tr>
         <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase"
-            *ngFor="let headerName of spendingTable.headerNames">{{headerName}}</th>
+            *ngFor="let column of spendingTable.columns">{{column.label}}</th>
       </tr>
       </thead>
       <tbody class="divide-y divide-gray-200">
@@ -63,8 +65,8 @@
               <span class="ml-4">{{row.rowTitle}}</span>
             </span>
           </td>
-          <td class="p-4 text-sm text-gray-800" [ngClass]="{'font-bold': last}"
-              *ngFor="let cell of row.cells; let last = last;">{{cell.totalInCents | amountAsEuros | currency: 'EUR'}}</td>
+          <td class="p-4 text-sm text-gray-800" [ngClass]="{'font-bold': cell.isSummaryCell}"
+              *ngFor="let cell of row.cells;">{{cell.totalInCents | amountAsEuros | currency: 'EUR'}}</td>
         </tr>
         <tr [ngClass]="{'p-0 collapse h-0' : !row.isExpanded}">
           <td class="px-6 py-4 text-sm text-gray-800"></td>
