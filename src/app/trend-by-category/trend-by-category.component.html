@@ -1,0 +1,75 @@
+<div>
+  <h1 class="text-2xl font-bold">{{showIncomeInsteadOfExpenses ? 'Income' : 'Expenses'}} </h1>
+  <div class="border rounded-lg shadow overflow-y-auto bg-white mt-4">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+      <tr>
+        <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase"
+            *ngFor="let headerName of spendingTable.headerNames">{{headerName}}</th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+      <ng-container *ngFor="let row of spendingTable.rows;">
+        <tr (click)="row.isExpanded = !row.isExpanded">
+          <td class="p-4 text-sm font-medium text-gray-800 bg-white">
+            <span class="flex">
+              <span>
+                <svg viewBox="0 0 24 24" class="stroke-gray-400" xmlns="http://www.w3.org/2000/svg" height="24px"
+                     width="24px" *ngIf="!row.isExpanded">
+                  <g>
+                    <polyline fill="none" id="Down" points="5 8.5 12 15.5 19 8.5" stroke-linecap="round"
+                              stroke-linejoin="round" stroke-width="2"/>
+                  </g>
+                </svg>
+                <svg viewBox="0 0 24 24" fill="none" class="stroke-black" xmlns="http://www.w3.org/2000/svg" height="24px"
+                     width="24px" *ngIf="row.isExpanded">
+                  <g>
+                    <path id="Vector" d="M5 16L12 9L19 16" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                  </g>
+                </svg>
+              </span>
+            <span class="ml-4">{{row.rowTitle}}</span>
+            </span>
+          </td>
+          <td class="p-4 text-sm text-gray-800" [ngClass]="{'font-bold': last}"
+              *ngFor="let cell of row.cells; let last = last;">{{cell.totalInCents | amountAsEuros | currency: 'EUR'}}</td>
+        </tr>
+        <tr [ngClass]="{'p-0 collapse h-0' : !row.isExpanded}">
+          <td class="px-6 py-4 text-sm text-gray-800"></td>
+          <td class="px-6 py-4 text-sm text-gray-800 align-top" *ngFor="let cell of row.cells;">
+            <ul class="list-disc px-4">
+              <li
+                *ngFor="let transaction of cell.transactions">{{ transaction.amountOfCents | amountAsEuros |  currency: 'EUR'}} {{transaction.targetAccountName}}</li>
+            </ul>
+          </td>
+        </tr>
+      </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+
+  <ng-container *ngIf="transactionsWithUnknownCategory && transactionsWithUnknownCategory.length > 0">
+    <h2 class="text-xl mt-6">Unknown category</h2>
+
+    <div class="border rounded-lg shadow overflow-auto bg-white mt-4">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+        <tr class="table__row">
+          <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">Account name</th>
+          <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">Description</th>
+          <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">Amount</th>
+        </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+        <tr *ngFor="let transaction of transactionsWithUnknownCategory">
+          <td class="p-4 text-sm font-medium text-gray-800">{{transaction.targetAccountName}}</td>
+          <td class="p-4 text-sm text-gray-800">{{transaction.description}}</td>
+          <td class="p-4 text-sm text-gray-800">{{transaction.amountOfCents | amountAsEuros |  currency: 'EUR'}}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+</div>

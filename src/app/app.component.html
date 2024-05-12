@@ -1,0 +1,25 @@
+<div class="bg-blue-600 text-white shadow-xl flex justify-center">
+  <div class="w-full max-w-[80%]">
+    <p class="font-bold p-4 text-lg">Cashflow</p>
+  </div>
+</div>
+
+<div class="flex justify-center">
+  <div class="w-full max-w-[80%]">
+    <ng-container *ngIf="transactions.length === 0">
+      <div class="m-6 p-4 shadow-xl bg-white rounded-lg">
+        <h2 class="text-2xl font-bold">Upload transactions</h2>
+        <p class="text-gray-600">Select a csv file with transactions to analyse. The processing is done on-device</p>
+        <input class="mt-6" type="file" (change)="onFileSelected($event)">
+      </div>
+    </ng-container>
+
+    <div class="m-6" *ngIf="transactions.length > 0">
+      <app-trend-by-category [transactions]="transactions" [showIncomeInsteadOfExpenses]="false"></app-trend-by-category>
+    </div>
+
+    <div class="m-6" *ngIf="transactions.length > 0">
+      <app-trend-by-category [transactions]="transactions" [showIncomeInsteadOfExpenses]="true"></app-trend-by-category>
+    </div>
+  </div>
+</div>
