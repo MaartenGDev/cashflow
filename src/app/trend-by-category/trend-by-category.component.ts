@@ -3,7 +3,9 @@ import {Transaction} from "../models/Transaction";
 import { TransactionDescriptionMappingConstants } from "../models/TransactionDescriptionToCategoryMap";
 import {CategoryWithTransactions, TransactionsByCategory} from "../models/TransactionsByCategory";
 import {ISpendingTable, ISpendingTableRow} from "../models/spending-table/SpendingTable";
-import {ChartConfiguration, TooltipItem} from "chart.js";
+import {ChartConfiguration, Color, Plugin, TooltipItem} from "chart.js";
+import ChartDataLabels, {Context} from 'chartjs-plugin-datalabels';
+
 
 @Component({
   selector: 'app-trend-by-category',
@@ -25,10 +27,10 @@ export class TrendByCategoryComponent implements OnChanges {
   @Input()
   transactionDescriptionToCategoryMap: Record<string, string> = {};
 
-  currentRowToShowChartFor: ISpendingTableRow|null =null;
+  public currentRowToShowChartFor?: ISpendingTableRow = undefined;
 
-  private yAxisEuroFormatter: Intl.NumberFormat = new Intl.NumberFormat("nl-NL");
-  private euroFormatter: Intl.NumberFormat = new Intl.NumberFormat("nl-NL", {minimumFractionDigits: 2});
+  private noFractionsFormatter: Intl.NumberFormat = new Intl.NumberFormat("nl-NL");
+  private twoFractionsFormatter: Intl.NumberFormat = new Intl.NumberFormat("nl-NL", {minimumFractionDigits: 2});
 
   public lineChartData: ChartConfiguration['data'] = {
     datasets: []
@@ -39,22 +41,53 @@ export class TrendByCategoryComponent implements OnChanges {
       y: {
         ticks: {
           callback: (value, index, ticks)=> {
-            return '€ ' + this.yAxisEuroFormatter.format(value as number);
+            return '€ ' + this.noFractionsFormatter.format(value as number);
           }
         }
       }
+    },
+    layout: {
+      padding: {
+        top: 0,
+        right: 32,
+        bottom: 16,
+        left: 0
+      }
+    },
+    elements: {
+
     },
     plugins: {
       tooltip: {
         callbacks: {
           label: (tooltipItem: TooltipItem<"line">): string | string[] | void => {
-            return ' Total: € ' + this.euroFormatter.format(tooltipItem.dataset.data[tooltipItem.dataIndex] as number);
+            return ' Total: € ' + this.twoFractionsFormatter.format(tooltipItem.dataset.data[tooltipItem.dataIndex] as number);
           },
           footer: this.buildTooltip.bind(this),
         }
+      },
+      datalabels: {
+        backgroundColor: (context: Context) => context.dataset.backgroundColor as Color,
+        borderRadius: 4,
+        color: 'white',
+        font: {
+          weight: 'bold'
+        },
+        formatter: (value: number, context: Context) => {
+          const formatter = value % 1 === 0
+              ? this.noFractionsFormatter
+              : this.twoFractionsFormatter;
+
+          return '€ ' + formatter.format(value)
+        },
+        padding: 6
       }
-    }
+    },
   };
+
+  public chartPlugins: Plugin[] = [
+    ChartDataLabels
+  ];
 
   private getMonthNamesFromTransactions(transactions: Transaction[]){
     return [...new Set(transactions.map(t => t.monthName))];
@@ -154,7 +187,11 @@ export class TrendByCategoryComponent implements OnChanges {
           data: row.cells
               .slice(0, table.headerNames.length - 2)
               .map(c => Math.abs(c.totalInCents / 100)),
-          label: row.rowTitle
+          label: row.rowTitle,
+          datalabels: {
+            align: 'end',
+            anchor: 'end'
+          }
         }
       ],
       labels: table.headerNames.slice(1).slice(0, table.headerNames.length - 2)
@@ -166,6 +203,6 @@ export class TrendByCategoryComponent implements OnChanges {
     const transactionsForCurrentPoint = this.currentRowToShowChartFor!.cells[firstTooltip.dataIndex].transactions;
 
     return transactionsForCurrentPoint
-        .map(t => `€ ${this.euroFormatter.format(Math.abs(t.amountOfCents / 100))} ${t.targetAccountName}`)
+        .map(t => `€ ${this.twoFractionsFormatter.format(Math.abs(t.amountOfCents / 100))} ${t.targetAccountName}`)
   }
 }

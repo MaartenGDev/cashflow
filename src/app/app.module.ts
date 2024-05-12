@@ -25,7 +25,9 @@ registerLocaleData(localeData);
   providers: [{
     provide: LOCALE_ID,
     useValue: 'nl-NL'
-  }, provideCharts(withDefaultRegisterables())],
+  },
+      provideCharts(withDefaultRegisterables())
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
