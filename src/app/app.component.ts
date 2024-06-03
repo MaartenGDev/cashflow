@@ -3,8 +3,6 @@ import {TransactionParserService} from "./services/transaction-parser.service";
 import {ITransactionDescriptionToCategoryMapping} from "./models/TransactionDescriptionToCategoryMap";
 import {NgIf} from "@angular/common";
 import {TrendByCategoryComponent} from "./trend-by-category/trend-by-category.component";
-import {UnknownCategoriesResponseStatus} from "./models/UnknownCategoriesResponseStatus";
-import {MappingComponent} from "./mapping/mapping.component";
 import {TransactionDecoratorService} from "./services/transaction-decorator.service";
 import {IDecoratedTransaction} from "./models/IDecoratedTransaction";
 
@@ -14,8 +12,7 @@ import {IDecoratedTransaction} from "./models/IDecoratedTransaction";
   styleUrls: ['./app.component.scss'],
   imports: [
     NgIf,
-    TrendByCategoryComponent,
-    MappingComponent
+    TrendByCategoryComponent
   ],
   standalone: true
 })
@@ -24,8 +21,6 @@ export class AppComponent implements OnInit {
   title = 'cashflow';
 
   transactionDescriptionToCategoryMap: Record<string, string> = {};
-  unknownCategoriesResponseStatus: UnknownCategoriesResponseStatus = UnknownCategoriesResponseStatus.fileNotYetUploaded;
-  unknownCategoriesResponseStatuses = UnknownCategoriesResponseStatus;
 
   private fileReader = new FileReader();
 
@@ -45,7 +40,6 @@ export class AppComponent implements OnInit {
       const fileContent = evt.target?.result as string;
 
       this.transactions = this.transactionDecorator.decorate(this.transactionParser.getTransactions(fileContent), this.transactionDescriptionToCategoryMap);
-      this.unknownCategoriesResponseStatus = UnknownCategoriesResponseStatus.askToProvide;
     }
   }
 
