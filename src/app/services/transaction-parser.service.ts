@@ -1,11 +1,11 @@
 import {Injectable} from '@angular/core';
-import {Transaction} from "../models/Transaction";
+import {ITransaction} from "../models/ITransaction";
 
 @Injectable({
   providedIn: 'root'
 })
-export class TransactionsParserService {
-  public getTransactions(rawTransactions: string) : Transaction[] {
+export class TransactionParserService {
+  public getTransactions(rawTransactions: string) : ITransaction[] {
     return rawTransactions
       .split("\n")
       .filter(rawTransaction => rawTransaction.split(",").length > 1)
@@ -18,8 +18,7 @@ export class TransactionsParserService {
           targetAccountIBAN: cells[2],
           targetAccountName: cells[3] || this.extractReceiverFromDescription(cells[17]),
           amountOfCents: this.getAsCents(cells[10]),
-          description: cells[17],
-          monthName: new Intl.DateTimeFormat('en-US', {month: "long", year: "numeric"}).format(this.getDateFromString(cells[0]))
+          description: cells[17]
         };
       });
   }

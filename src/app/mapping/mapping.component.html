@@ -1,0 +1,46 @@
+<h2 class="text-2xl font-bold mt-6">Categories</h2>
+
+<div class="border rounded-lg shadow overflow-y-auto bg-white mt-4">
+  <table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-gray-50">
+    <tr class="table__row">
+      <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">Name</th>
+    </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-200">
+    <tr *ngFor="let accountNameToCategoryMapping of accountNameToCategoryMapping | keyvalue">
+      <td class="p-4 text-sm font-medium text-gray-800">{{accountNameToCategoryMapping.key}}</td>
+      <td class="p-4 text-sm font-medium text-gray-800">{{accountNameToCategoryMapping.value}}</td>
+      <td class="p-4"><button class="select-none rounded-lg bg-red-500 py-2 px-4 text-center align-middle text-xs font-bold uppercase text-white shadow-md" (click)="removeCategory(accountNameToCategoryMapping.key)">Delete</button></td>
+    </tr>
+    <tr>
+      <td class="p-4 text-sm font-medium text-gray-800"><input type="text" class="py-2 px-4 rounded border border-gray-600" [(ngModel)]="accountNameInputValue"/></td>
+      <td class="p-4 text-sm font-medium text-gray-800"><input type="text" class="py-2 px-4 rounded border border-gray-600" [(ngModel)]="categoryInputValue"/></td>
+      <td class="p-4 text-sm font-medium text-gray-800"><button class="select-none rounded-lg bg-amber-500 py-2 px-4 text-center align-middle text-xs font-bold uppercase text-white shadow-md" [disabled]="categoryInputValue === ''"  (click)="addAccountNameToCategoryMapping(accountNameInputValue, categoryInputValue)">Add</button></td>
+    </tr>
+    </tbody>
+  </table>
+
+
+</div>
+
+<h2 class="text-2xl font-bold mt-6">Mapping</h2>
+
+<div class="border rounded-lg shadow overflow-y-auto bg-white mt-4">
+  <table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-gray-50">
+    <tr class="table__row">
+      <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">Account name</th>
+      <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">Description</th>
+      <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">Amount</th>
+    </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-200">
+    <tr *ngFor="let transaction of transactionsWithUnknownCategory">
+      <td class="p-4 text-sm font-medium text-gray-800">{{transaction.targetAccountName}}</td>
+      <td class="p-4 text-sm text-gray-800">{{transaction.description}}</td>
+      <td class="p-4 text-sm text-gray-800">{{transaction.amountOfCents | amountAsEuros |  currency: 'EUR'}}</td>
+    </tr>
+    </tbody>
+  </table>
+</div>

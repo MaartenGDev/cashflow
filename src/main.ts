@@ -1,7 +1,24 @@
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import {bootstrapApplication} from "@angular/platform-browser";
+import {AppComponent} from "./app/app.component";
+import {LOCALE_ID} from "@angular/core";
+import {provideCharts, withDefaultRegisterables} from "ng2-charts";
+import {provideRouter} from "@angular/router";
+import localeData from '@angular/common/locales/nl';
+import {registerLocaleData} from "@angular/common";
 
-import { AppModule } from './app/app.module';
 
+registerLocaleData(localeData);
 
-platformBrowserDynamic().bootstrapModule(AppModule)
-  .catch(err => console.error(err));
+bootstrapApplication(AppComponent, {
+  providers: [
+    {
+      provide: LOCALE_ID,
+      useValue: 'nl-NL'
+    },
+    provideCharts(withDefaultRegisterables()),
+    provideRouter([
+      { path: '**', component: AppComponent },
+    ])
+  ]
+})
+  .catch(err => console.error(err))

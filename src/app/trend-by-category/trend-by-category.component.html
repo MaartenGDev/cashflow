@@ -3,8 +3,8 @@
   <div class="flex justify-center items-center h-full w-full">
     <div class="bg-white p-6 relative">
       <p class="text-xl"><b>Trend for {{ currentRowToShowChartFor!.rowTitle }}</b></p>
-      <p>Total: <span class="text-gray-500">{{currentRowToShowChartFor!.totalInCents | amountAsEuros |  currency: 'EUR'}}</span></p>
       <p>Average: <span class="text-gray-500">{{currentRowToShowChartFor!.averageInCents | amountAsEuros |  currency: 'EUR'}}</span></p>
+      <p>Total: <span class="text-gray-500">{{currentRowToShowChartFor!.totalInCents | amountAsEuros |  currency: 'EUR'}}</span></p>
       <div class="absolute right-2 top-2" (click)="currentRowToShowChartFor = undefined">
         <svg width="32px" height="32px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <g id="Menu / Close_SM">
@@ -27,7 +27,7 @@
   </div>
 </div>
 <div>
-  <h1 class="text-2xl font-bold">{{showIncomeInsteadOfExpenses ? 'Income' : 'Expenses'}} </h1>
+  <h1 class="text-2xl font-bold">{{showIncomeInsteadOfExpenses ? 'Income' : 'Expenses'}}</h1>
   <div class="border rounded-lg shadow overflow-y-auto bg-white mt-4">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">

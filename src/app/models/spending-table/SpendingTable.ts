@@ -1,4 +1,4 @@
-import {Transaction} from "../Transaction";
+import {ITransaction} from "../ITransaction";
 
 export interface ISpendingTableColumn {
   label: string;
@@ -20,6 +20,6 @@ export interface ISpendingTableRow {
 
 export interface ISpendingTableCell {
   totalInCents: number;
-  transactions: Transaction[]
+  transactions: ITransaction[]
   isSummaryCell: boolean;
 }

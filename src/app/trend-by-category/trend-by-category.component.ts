@@ -1,25 +1,39 @@
 import {Component, Input, OnChanges, SimpleChanges} from '@angular/core';
-import {Transaction} from "../models/Transaction";
+import {ITransaction} from "../models/ITransaction";
 import { TransactionDescriptionMappingConstants } from "../models/TransactionDescriptionToCategoryMap";
 import {CategoryWithTransactions, TransactionsByCategory} from "../models/TransactionsByCategory";
 import {ISpendingTable, ISpendingTableColumn, ISpendingTableRow} from "../models/spending-table/SpendingTable";
 import {ChartConfiguration, Color, Plugin, TooltipItem} from "chart.js";
 import ChartDataLabels, {Context} from 'chartjs-plugin-datalabels';
+import {AmountAsEurosPipe} from "../pipes/currency-pipe";
+import {CurrencyPipe, NgClass, NgForOf, NgIf} from "@angular/common";
+import {BaseChartDirective} from "ng2-charts";
+import {IDecoratedTransaction} from "../models/IDecoratedTransaction";
+import {ISalaryPeriod} from "../models/ISalaryPeriod";
 
 
 @Component({
   selector: 'app-trend-by-category',
   templateUrl: './trend-by-category.component.html',
-  styleUrls: ['./trend-by-category.component.scss']
+  styleUrls: ['./trend-by-category.component.scss'],
+  imports: [
+    AmountAsEurosPipe,
+    CurrencyPipe,
+    BaseChartDirective,
+    NgClass,
+    NgForOf,
+    NgIf
+  ],
+  standalone: true
 })
 export class TrendByCategoryComponent implements OnChanges {
   public spendingSummaryByCategory: {totalInCents: number; byCategory: CategoryWithTransactions[], totalTransactionCount: number} = {totalInCents: 0, byCategory: [], totalTransactionCount: 0};
-  public transactionsWithUnknownCategory: Transaction[] = [];
+  public transactionsWithUnknownCategory: ITransaction[] = [];
 
   public spendingTable: ISpendingTable = {columns: [], rows: []};
 
   @Input()
-  public transactions: Transaction[] = [];
+  public transactions: IDecoratedTransaction[] = [];
 
   @Input()
   public showIncomeInsteadOfExpenses = false;
@@ -54,9 +68,6 @@ export class TrendByCategoryComponent implements OnChanges {
         left: 0
       }
     },
-    elements: {
-
-    },
     plugins: {
       tooltip: {
         callbacks: {
@@ -64,6 +75,11 @@ export class TrendByCategoryComponent implements OnChanges {
             return ' Total: € ' + this.twoFractionsFormatter.format(tooltipItem.dataset.data[tooltipItem.dataIndex] as number);
           },
           footer: this.buildTooltip.bind(this),
+          title: (tooltipItems: TooltipItem<"line">[]): string | string[] | void => {
+            const period = this.transactions.find(t => t.salaryMonthName === tooltipItems[0].label)!.period;
+
+            return `${tooltipItems[0].label} (${this.dateFormatter.format(period.startDate)} t/m ${this.dateFormatter.format(period.endDate)})`;
+          }
         }
       },
       datalabels: {
@@ -89,18 +105,22 @@ export class TrendByCategoryComponent implements OnChanges {
     ChartDataLabels
   ];
 
-  private getMonthColumnsFromTransactions(transactions: Transaction[]): ISpendingTableColumn[] {
-    return [...new Set(transactions.map(t => t.monthName))]
+  private dateFormatter = new Intl.DateTimeFormat('nl-NL', {hour12: false, day: "2-digit", month: "2-digit", year: "numeric"});
+
+  private getMonthColumnsFromTransactions(transactions: IDecoratedTransaction[]): ISpendingTableColumn[] {
+    return [...new Set(transactions.map(t => t.salaryMonthName))]
         .map(monthName => ({label: monthName, isSummaryColumn: false}));
   }
 
-  private setDatasets(transactions: Transaction[]) {
-    const spendingByCategoryAndPeriod: Partial<Record<string, { [periodName: string]: Transaction[] }>> = {};
+  private setDatasets(transactions: IDecoratedTransaction[]) {
+    const spendingByCategoryAndPeriod: Partial<Record<string, { [periodName: string]: ITransaction[] }>> = {};
 
-    const transactionsForDataset = transactions.filter(t => this.showIncomeInsteadOfExpenses && t.amountOfCents > 0 || !this.showIncomeInsteadOfExpenses && t.amountOfCents < 0);
+    const transactionsForDataset = transactions
+      .filter(t => this.showIncomeInsteadOfExpenses && t.amountOfCents > 0 || !this.showIncomeInsteadOfExpenses && t.amountOfCents < 0)
+      .filter(t => t.category !== 'InternalMoneyTransfer')
 
     const monthColumns = this.getMonthColumnsFromTransactions(transactionsForDataset);
-    const categories = new Set(transactionsForDataset.map(t => this.getCategory(t)));
+    const categories = new Set(transactionsForDataset.map(t => t.category));
 
     for (const categoryName of categories) {
       spendingByCategoryAndPeriod[categoryName] = {};
@@ -111,9 +131,7 @@ export class TrendByCategoryComponent implements OnChanges {
     }
 
     for (const transaction of transactionsForDataset) {
-      const transactionCategory = this.getCategory(transaction);
-
-      spendingByCategoryAndPeriod[transactionCategory]![transaction.monthName].push(transaction);
+      spendingByCategoryAndPeriod[transaction.category]![transaction.salaryMonthName].push(transaction);
     }
 
     const getTransactionCategories = this.getTransactionCategoriesWithTotals(transactionsForDataset);
@@ -151,6 +169,22 @@ export class TrendByCategoryComponent implements OnChanges {
       }
     });
 
+    this.spendingTable.rows.push({
+      totalInCents: transactionsForDataset.reduce((acc, cur) => acc+ cur.amountOfCents, 0),
+      averageInCents: transactionsForDataset.reduce((acc, cur) => acc+ cur.amountOfCents, 0) / transactionsForDataset.length,
+      rowTitle: 'Totals',
+      cells: [
+        {isSummaryCell: true,totalInCents: transactionsForDataset.reduce((acc, cur) => acc+ cur.amountOfCents, 0) / transactionsForDataset.length, transactions: []},
+        {isSummaryCell: true,totalInCents: transactionsForDataset.reduce((acc, cur) => acc+ cur.amountOfCents, 0), transactions: []},
+        ...this.getMonthColumnsFromTransactions(transactionsForDataset).map((monthColumn, columnIndex) => ({
+          transactions: [],
+          totalInCents: transactionsForDataset.filter(t => t.salaryMonthName === monthColumn.label).reduce((acc, cur) => acc + cur.amountOfCents, 0),
+          isSummaryCell: false
+        }))
+      ],
+      isExpanded: false
+    })
+
     this.spendingTable.rows.sort((a, b) =>
       b.cells.reduce((acc, cur) => acc + Math.abs(cur.totalInCents), 0)
       -
@@ -158,14 +192,13 @@ export class TrendByCategoryComponent implements OnChanges {
     )
   }
 
-  private getTransactionCategoriesWithTotals(transactions: Transaction[]): CategoryWithTransactions[] {
+  private getTransactionCategoriesWithTotals(transactions: IDecoratedTransaction[]): CategoryWithTransactions[] {
     const transactionCategories = Object.values(transactions.reduce((acc, cur) => {
-      const transactionCategory = this.getCategory(cur);
 
-      return {...acc, [transactionCategory]: {
-          name: transactionCategory,
-          totalAmountInCents: (acc[transactionCategory]?.totalAmountInCents || 0) + cur.amountOfCents,
-          transactions: [...(acc[transactionCategory]?.transactions || []), cur]
+      return {...acc, [cur.category]: {
+          name: cur.category,
+          totalAmountInCents: (acc[cur.category]?.totalAmountInCents || 0) + cur.amountOfCents,
+          transactions: [...(acc[cur.category]?.transactions || []), cur]
         }
       }
     }, {} as TransactionsByCategory));
@@ -179,10 +212,6 @@ export class TrendByCategoryComponent implements OnChanges {
     if(changes['transactions']){
       this.setDatasets(this.transactions)
     }
-  }
-
-  private getCategory(transaction: Transaction): string {
-    return this.transactionDescriptionToCategoryMap[transaction.targetAccountName] || TransactionDescriptionMappingConstants.UnknownCategory;
   }
 
   showChartForRow(event: Event, table: ISpendingTable, row: ISpendingTableRow) {
@@ -211,6 +240,6 @@ export class TrendByCategoryComponent implements OnChanges {
     const transactionsForCurrentPoint = this.currentRowToShowChartFor!.cells.filter(c => !c.isSummaryCell)[firstTooltip.dataIndex].transactions;
 
     return transactionsForCurrentPoint
-        .map(t => `€ ${this.twoFractionsFormatter.format(Math.abs(t.amountOfCents / 100))} ${t.targetAccountName}`)
+        .map(t => ` ${this.dateFormatter.format(t.date)} - € ${this.twoFractionsFormatter.format(Math.abs(t.amountOfCents / 100))} ${t.targetAccountName}`)
   }
 }
