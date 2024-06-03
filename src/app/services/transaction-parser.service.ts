@@ -18,7 +18,7 @@ export class TransactionParserService {
           targetAccountIBAN: cells[2],
           targetAccountName: cells[3] || this.extractReceiverFromDescription(cells[17]),
           amountOfCents: this.getAsCents(cells[10]),
-          description: cells[17]
+          description: this.formatDescription(cells[17])
         };
       });
   }
@@ -43,5 +43,19 @@ export class TransactionParserService {
     }
 
     return transactionDescription.substring(0, transactionDescription.indexOf(">")).replace('\'', '').trim();
+  }
+
+  private formatDescription(string: string): string {
+    let formattedString = string;
+
+    if(formattedString.startsWith('\'')){
+      formattedString = formattedString.substring(1);
+    }
+
+    if(formattedString.endsWith('\'')){
+      formattedString = formattedString.substring(0, formattedString.length - 2);
+    }
+
+    return formattedString;
   }
 }

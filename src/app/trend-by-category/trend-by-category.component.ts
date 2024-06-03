@@ -117,7 +117,7 @@ export class TrendByCategoryComponent implements OnChanges {
 
     const transactionsForDataset = transactions
       .filter(t => this.showIncomeInsteadOfExpenses && t.amountOfCents > 0 || !this.showIncomeInsteadOfExpenses && t.amountOfCents < 0)
-      .filter(t => t.category !== 'InternalMoneyTransfer')
+      .filter(t => t.category !== 'InternalMoneyTransfer');
 
     const monthColumns = this.getMonthColumnsFromTransactions(transactionsForDataset);
     const categories = new Set(transactionsForDataset.map(t => t.category));
@@ -171,12 +171,12 @@ export class TrendByCategoryComponent implements OnChanges {
 
     this.spendingTable.rows.push({
       totalInCents: transactionsForDataset.reduce((acc, cur) => acc+ cur.amountOfCents, 0),
-      averageInCents: transactionsForDataset.reduce((acc, cur) => acc+ cur.amountOfCents, 0) / transactionsForDataset.length,
+      averageInCents: transactionsForDataset.reduce((acc, cur) => acc+ cur.amountOfCents, 0) / monthColumns.length,
       rowTitle: 'Totals',
       cells: [
-        {isSummaryCell: true,totalInCents: transactionsForDataset.reduce((acc, cur) => acc+ cur.amountOfCents, 0) / transactionsForDataset.length, transactions: []},
+        {isSummaryCell: true,totalInCents: transactionsForDataset.reduce((acc, cur) => acc+ cur.amountOfCents, 0) / monthColumns.length, transactions: []},
         {isSummaryCell: true,totalInCents: transactionsForDataset.reduce((acc, cur) => acc+ cur.amountOfCents, 0), transactions: []},
-        ...this.getMonthColumnsFromTransactions(transactionsForDataset).map((monthColumn, columnIndex) => ({
+        ...monthColumns.map((monthColumn, columnIndex) => ({
           transactions: [],
           totalInCents: transactionsForDataset.filter(t => t.salaryMonthName === monthColumn.label).reduce((acc, cur) => acc + cur.amountOfCents, 0),
           isSummaryCell: false
