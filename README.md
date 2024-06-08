@@ -11,8 +11,8 @@ It takes salary paydays into account to show a more realistic picture of the mon
 {
   "$schema": "./mapping-schema.json",
   "mapping": {
-    "TickingMachine AMS": "PublicTransport",
-    "MyFashionStore": "Shopping"
+    "TicketingMachine AMS": "PublicTransport",
+    "TrendyFashionStore": "Shopping"
   }
 }
 ```
