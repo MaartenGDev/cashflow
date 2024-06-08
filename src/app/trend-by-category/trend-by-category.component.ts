@@ -1,7 +1,6 @@
 import {Component, Input, OnChanges, SimpleChanges} from '@angular/core';
 import {ITransaction} from "../models/ITransaction";
 import { TransactionDescriptionMappingConstants } from "../models/TransactionDescriptionToCategoryMap";
-import {CategoryWithTransactions, TransactionsByCategory} from "../models/TransactionsByCategory";
 import {ISpendingTable, ISpendingTableColumn, ISpendingTableRow} from "../models/spending-table/SpendingTable";
 import {ChartConfiguration, Color, Plugin, TooltipItem} from "chart.js";
 import ChartDataLabels, {Context} from 'chartjs-plugin-datalabels';
@@ -9,7 +8,6 @@ import {AmountAsEurosPipe} from "../pipes/currency-pipe";
 import {CurrencyPipe, NgClass, NgForOf, NgIf} from "@angular/common";
 import {BaseChartDirective} from "ng2-charts";
 import {IDecoratedTransaction} from "../models/IDecoratedTransaction";
-import {ISalaryPeriod} from "../models/ISalaryPeriod";
 
 
 @Component({
@@ -27,10 +25,9 @@ import {ISalaryPeriod} from "../models/ISalaryPeriod";
   standalone: true
 })
 export class TrendByCategoryComponent implements OnChanges {
-  public spendingSummaryByCategory: {totalInCents: number; byCategory: CategoryWithTransactions[], totalTransactionCount: number} = {totalInCents: 0, byCategory: [], totalTransactionCount: 0};
   public transactionsWithUnknownCategory: ITransaction[] = [];
 
-  public spendingTable: ISpendingTable = {columns: [], rows: []};
+  public spendingTable: ISpendingTable = {fixedColumns: [], columns: [], rows: []};
 
   @Input()
   public transactions: IDecoratedTransaction[] = [];
@@ -41,7 +38,7 @@ export class TrendByCategoryComponent implements OnChanges {
   @Input()
   transactionDescriptionToCategoryMap: Record<string, string> = {};
 
-  public currentRowToShowChartFor?: ISpendingTableRow = undefined;
+  public currentRowToShowChartFor: ISpendingTableRow|undefined = undefined;
 
   private noFractionsFormatter: Intl.NumberFormat = new Intl.NumberFormat("nl-NL");
   private twoFractionsFormatter: Intl.NumberFormat = new Intl.NumberFormat("nl-NL", {minimumFractionDigits: 2});
@@ -134,17 +131,13 @@ export class TrendByCategoryComponent implements OnChanges {
       spendingByCategoryAndPeriod[transaction.category]![transaction.salaryMonthName].push(transaction);
     }
 
-    const getTransactionCategories = this.getTransactionCategoriesWithTotals(transactionsForDataset);
+    this.transactionsWithUnknownCategory = transactionsForDataset.filter(t => t.category === TransactionDescriptionMappingConstants.UnknownCategory);
 
-    this.spendingSummaryByCategory = {
-      totalInCents: getTransactionCategories.reduce((acc, cur) => acc + Math.abs(cur.totalAmountInCents), 0),
-      byCategory: getTransactionCategories,
-      totalTransactionCount: transactionsForDataset.length
-    };
+    this.spendingTable.fixedColumns = [
+      {label: 'Category', isSummaryColumn: true}, {label: 'Average', isSummaryColumn: true}, {label: 'Total', isSummaryColumn: true}
+    ];
 
-    this.transactionsWithUnknownCategory = getTransactionCategories.find(c => c.name === TransactionDescriptionMappingConstants.UnknownCategory)?.transactions || [];
-
-    this.spendingTable.columns = [{label: 'Category', isSummaryColumn: true}, {label: 'Average', isSummaryColumn: true}, {label: 'Total', isSummaryColumn: true}, ...this.getMonthColumnsFromTransactions(transactionsForDataset)];
+    this.spendingTable.columns = this.getMonthColumnsFromTransactions(transactionsForDataset);
     this.spendingTable.rows =  Object.keys(spendingByCategoryAndPeriod).map((categoryName) => {
       const transactionsByMonth = Object.values(spendingByCategoryAndPeriod[categoryName]!)
         .map(transactionsInMonth => ({
@@ -190,22 +183,6 @@ export class TrendByCategoryComponent implements OnChanges {
       -
       a.cells.reduce((acc, cur) => acc + Math.abs(cur.totalInCents), 0)
     )
-  }
-
-  private getTransactionCategoriesWithTotals(transactions: IDecoratedTransaction[]): CategoryWithTransactions[] {
-    const transactionCategories = Object.values(transactions.reduce((acc, cur) => {
-
-      return {...acc, [cur.category]: {
-          name: cur.category,
-          totalAmountInCents: (acc[cur.category]?.totalAmountInCents || 0) + cur.amountOfCents,
-          transactions: [...(acc[cur.category]?.transactions || []), cur]
-        }
-      }
-    }, {} as TransactionsByCategory));
-
-    transactionCategories.sort((a, b) => a.totalAmountInCents - b.totalAmountInCents)
-
-    return transactionCategories;
   }
 
   ngOnChanges(changes: SimpleChanges): void {

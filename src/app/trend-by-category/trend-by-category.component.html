@@ -1,4 +1,4 @@
-<div class="fixed top-0 bottom-0 right-0 left-0" *ngIf="currentRowToShowChartFor">
+<div class="fixed top-0 bottom-0 right-0 left-0 z-20" *ngIf="currentRowToShowChartFor">
   <div class="bg-black opacity-10 absolute h-full w-full" (click)="currentRowToShowChartFor = undefined"></div>
   <div class="flex justify-center items-center h-full w-full">
     <div class="bg-white p-6 relative">
@@ -32,50 +32,71 @@
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
       <tr>
-        <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase"
+        <th class="sticky left-0 top-0 z-10 right-inset-border bg-gray-50">
+          <div class="flex items-center">
+            <div *ngFor="let column of spendingTable.fixedColumns; let i = index; let last = last;" [ngClass]="{'flex flex-grow self-start pl-10': i == 0, 'pr-4 pl-8': last}">
+              <span class="inline-block px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">{{column.label}}</span>
+            </div>
+          </div>
+        </th>
+        <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase text-nowrap sticky top-0"
             *ngFor="let column of spendingTable.columns">{{column.label}}</th>
       </tr>
       </thead>
       <tbody class="divide-y divide-gray-200">
       <ng-container *ngFor="let row of spendingTable.rows;">
         <tr (click)="row.isExpanded = !row.isExpanded">
-          <td class="p-4 text-sm font-medium text-gray-800 bg-white">
-            <span class="flex">
-              <span>
-                <svg viewBox="0 0 24 24" class="stroke-gray-400" xmlns="http://www.w3.org/2000/svg" height="24px"
-                     width="24px" *ngIf="!row.isExpanded">
-                  <g>
-                    <polyline fill="none" id="Down" points="5 8.5 12 15.5 19 8.5" stroke-linecap="round"
-                              stroke-linejoin="round" stroke-width="2"/>
-                  </g>
-                </svg>
-                <svg viewBox="0 0 24 24" fill="none" class="stroke-black" xmlns="http://www.w3.org/2000/svg" height="24px"
-                     width="24px" *ngIf="row.isExpanded">
-                  <g>
-                    <path id="Vector" d="M5 16L12 9L19 16" stroke-width="2" stroke-linecap="round"
-                          stroke-linejoin="round"/>
-                  </g>
-                </svg>
-              </span>
-               <span class="ml-4" (click)="showChartForRow($event, spendingTable, row)">
-                <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="stroke-gray-400">
-                <path d="M21 21H6.2C5.07989 21 4.51984 21 4.09202 20.782C3.71569 20.5903 3.40973 20.2843 3.21799 19.908C3 19.4802 3 18.9201 3 17.8V3M7 15L12 9L16 13L21 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-              <span class="ml-4">{{row.rowTitle}}</span>
-            </span>
+          <td class="p-4 text-sm font-medium text-gray-800 bg-white sticky left-0 right-inset-border">
+            <div class="flex">
+              <div class="flex flex-grow items-center">
+                <span>
+                  <svg viewBox="0 0 24 24" class="stroke-gray-400" xmlns="http://www.w3.org/2000/svg" height="24px"
+                       width="24px" *ngIf="!row.isExpanded">
+                    <g>
+                      <polyline fill="none" id="Down" points="5 8.5 12 15.5 19 8.5" stroke-linecap="round"
+                                stroke-linejoin="round" stroke-width="2"/>
+                    </g>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="none" class="stroke-black" xmlns="http://www.w3.org/2000/svg" height="24px"
+                       width="24px" *ngIf="row.isExpanded">
+                    <g>
+                      <path id="Vector" d="M5 16L12 9L19 16" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round"/>
+                    </g>
+                  </svg>
+                </span>
+                <span class="ml-4" (click)="showChartForRow($event, spendingTable, row)">
+                  <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="stroke-gray-400">
+                  <path d="M21 21H6.2C5.07989 21 4.51984 21 4.09202 20.782C3.71569 20.5903 3.40973 20.2843 3.21799 19.908C3 19.4802 3 18.9201 3 17.8V3M7 15L12 9L16 13L21 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="ml-4">{{row.rowTitle}}</span>
+              </div>
+              <ng-container *ngFor="let cell of row.cells; let last = last;">
+                <ng-container *ngIf="cell.isSummaryCell">
+                  <div class="p-4 text-sm text-gray-800 font-bold" [ngClass]="{'right-inset-border': last}">{{cell.totalInCents | amountAsEuros | currency: 'EUR'}}</div>
+                </ng-container>
+              </ng-container>
+            </div>
           </td>
-          <td class="p-4 text-sm text-gray-800" [ngClass]="{'font-bold': cell.isSummaryCell}"
-              *ngFor="let cell of row.cells;">{{cell.totalInCents | amountAsEuros | currency: 'EUR'}}</td>
+          <ng-container *ngFor="let cell of row.cells;">
+            <ng-container *ngIf="!cell.isSummaryCell">
+              <td class="p-4 text-sm text-gray-800">{{cell.totalInCents | amountAsEuros | currency: 'EUR'}}</td>
+            </ng-container>
+          </ng-container>
         </tr>
         <tr [ngClass]="{'p-0 collapse h-0' : !row.isExpanded}">
-          <td class="px-6 py-4 text-sm text-gray-800"></td>
-          <td class="px-6 py-4 text-sm text-gray-800 align-top" *ngFor="let cell of row.cells;">
-            <ul class="list-disc px-4">
-              <li
-                *ngFor="let transaction of cell.transactions">{{ transaction.amountOfCents | amountAsEuros |  currency: 'EUR'}} {{transaction.targetAccountName}}</li>
-            </ul>
-          </td>
+          <td class="px-6 py-4 text-sm text-gray-800 bg-white z-10 sticky left-0 right-inset-border"></td>
+          <ng-container *ngFor="let cell of row.cells;">
+            <ng-container *ngIf="!cell.isSummaryCell">
+              <td class="px-6 py-4 text-sm text-gray-800 align-top">
+                <ul class="list-disc px-4">
+                  <li
+                    *ngFor="let transaction of cell.transactions">{{ transaction.amountOfCents | amountAsEuros |  currency: 'EUR'}} {{transaction.targetAccountName}}</li>
+                </ul>
+              </td>
+            </ng-container>
+          </ng-container>
         </tr>
       </ng-container>
       </tbody>

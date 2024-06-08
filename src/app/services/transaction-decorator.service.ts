@@ -51,8 +51,8 @@ export class TransactionDecoratorService {
       }
     }
 
-    const transactionBeforeFirstSalaryPeriod = transactions.find(t => t.date < salaryPeriods[0].startDate);
-    const transactionAfterLastSalaryPeriod = transactions.find(t => t.date > salaryPeriods[salaryPeriods.length -1].endDate);
+    const transactionBeforeFirstSalaryPeriod = salaryPeriods.length > 0 ? transactions.find(t => t.date < salaryPeriods[0].startDate) : transactions[0];
+    const transactionAfterLastSalaryPeriod = salaryPeriods.length > 0 ? transactions.find(t => t.date > salaryPeriods[salaryPeriods.length -1].endDate) : transactions[transactions.length -1];
 
     if(transactionBeforeFirstSalaryPeriod){
       salaryPeriods = [

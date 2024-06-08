@@ -6,6 +6,7 @@ export interface ISpendingTableColumn {
 }
 
 export interface ISpendingTable {
+  fixedColumns: ISpendingTableColumn[];
   columns: ISpendingTableColumn[];
   rows: ISpendingTableRow[];
 }
