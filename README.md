@@ -16,7 +16,7 @@ It takes salary paydays into account to show a more realistic picture of the mon
   }
 }
 ```
-3. Run npm start
+3. Run `npm start`
 4. Import a CSV export with transactions
 
 ## Screenshots
