@@ -4,6 +4,21 @@ Application to get insights into expenses and income based on transaction export
 
 It takes salary paydays into account to show a more realistic picture of the money spend.
 
+## Setup
+1. Create a json file named `mapping.json` at `src/assets/mapping.json`
+2. Configure the mapping between account and category in `mapping.json`, an example:
+```
+{
+  "$schema": "./mapping-schema.json",
+  "mapping": {
+    "TickingMachine AMS": "PublicTransport",
+    "MyFashionStore": "Shopping",
+  }
+}
+```
+3. Run npm start
+4. Import a CSV export with transactions
+
 ## Screenshots
 
 #### Upload transactions export
