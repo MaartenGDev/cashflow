@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Description to category mapping",
-  "description": "Key-value map to convert transaction description to category",
+  "description": "Key-value map to link a transaction description to an category",
   "type": "object",
   "properties": {
     "mapping": {
