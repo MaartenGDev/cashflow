@@ -26,12 +26,6 @@ export class TransactionDecoratorService {
     })
   }
 
-  private addMonths(date: Date, months: number): Date {
-    const updatedDate = new Date(date.getTime());
-    updatedDate.setMonth(date.getMonth() + months);
-    return updatedDate;
-  }
-
   private getSalaryPeriods(transactions: ITransaction[], transactionDescriptionToCategoryMap: Record<string, string>): ISalaryPeriod[] {
     let salaryPeriods: ISalaryPeriod[] = [];
 
@@ -43,7 +37,7 @@ export class TransactionDecoratorService {
           salaryPeriods.push({
             startDate: previousSalaryPeriodStartDate,
             endDate: this.getDayBeforeAtMidnight(transaction.date),
-            label: new Intl.DateTimeFormat('en-US', {month: "long", year: "numeric"}).format(previousSalaryPeriodStartDate)
+            label: this.monthFormatter.format(previousSalaryPeriodStartDate)
           });
         }
 
@@ -55,10 +49,12 @@ export class TransactionDecoratorService {
     const transactionAfterLastSalaryPeriod = salaryPeriods.length > 0 ? transactions.find(t => t.date > salaryPeriods[salaryPeriods.length -1].endDate) : transactions[transactions.length -1];
 
     if(transactionBeforeFirstSalaryPeriod){
+      const periodStartDate = transactions[0].date;
+
       salaryPeriods = [
         {
-          label: this.monthFormatter.format(this.addMonths(salaryPeriods[0].startDate, -1)),
-          startDate: transactions[0].date,
+          label: this.monthFormatter.format(periodStartDate),
+          startDate: periodStartDate,
           endDate: this.getDayBeforeAtMidnight(salaryPeriods[0].startDate)
         },
         ...salaryPeriods
@@ -67,12 +63,13 @@ export class TransactionDecoratorService {
 
     if(transactionAfterLastSalaryPeriod){
       const lastPeriod = salaryPeriods[salaryPeriods.length - 1];
+      const periodStartDate = this.nextDayAtMorning(lastPeriod.endDate);
 
       salaryPeriods = [
         ...salaryPeriods,
         {
-          label: this.monthFormatter.format(this.addMonths(lastPeriod.endDate, 1)),
-          startDate: this.nextDayAtMorning(lastPeriod.endDate),
+          label: this.monthFormatter.format(periodStartDate),
+          startDate: periodStartDate,
           endDate: transactions[transactions.length -1].date
         },
       ]
