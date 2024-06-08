@@ -15,7 +15,7 @@ It takes salary paydays into account to show a more realistic picture of the mon
 #### View transactions by month
 ![Category details](./docs/category_details.png)
 
-#### View transaction without a category
+#### View transactions without a category
 ![Unknown category](./docs/unknown_category.png)
 
 #### View history per category
