@@ -9,6 +9,7 @@ import {TransactionDescriptionMappingConstants} from "../models/TransactionDescr
 })
 export class TransactionDecoratorService {
   monthFormatter = new Intl.DateTimeFormat('en-US', {month: "long", year: "numeric"});
+  dayFormatter = new Intl.DateTimeFormat('en-US', {day: "numeric", month: "short"});
 
   public decorate(transactions: ITransaction[], transactionDescriptionToCategoryMap: Record<string, string>): IDecoratedTransaction[] {
     const salaryPeriods = this.getSalaryPeriods(transactions, transactionDescriptionToCategoryMap);
@@ -27,17 +28,20 @@ export class TransactionDecoratorService {
   }
 
   private getSalaryPeriods(transactions: ITransaction[], transactionDescriptionToCategoryMap: Record<string, string>): ISalaryPeriod[] {
-    let salaryPeriods: ISalaryPeriod[] = [];
+    if (transactions.length === 0) {
+      return [];
+    }
 
-    let previousSalaryPeriodStartDate: null|Date = null;
+    let salaryPeriods: ISalaryPeriod[] = [];
+    let previousSalaryPeriodStartDate: null | Date = null;
 
     for (const transaction of transactions) {
-      if(transaction.amountOfCents > 200_000 && this.getCategory(transactionDescriptionToCategoryMap, transaction) === "Salary"){
-        if(previousSalaryPeriodStartDate){
+      if (transaction.amountOfCents > 200_000 && this.getCategory(transactionDescriptionToCategoryMap, transaction) === "Salary") {
+        if (previousSalaryPeriodStartDate) {
           salaryPeriods.push({
             startDate: previousSalaryPeriodStartDate,
             endDate: this.getDayBeforeAtMidnight(transaction.date),
-            label: this.monthFormatter.format(previousSalaryPeriodStartDate)
+            label: this.dayFormatter.format(previousSalaryPeriodStartDate) + ' - ' + this.dayFormatter.format(this.getDayBeforeAtMidnight(transaction.date))
           });
         }
 
@@ -45,32 +49,47 @@ export class TransactionDecoratorService {
       }
     }
 
-    const transactionBeforeFirstSalaryPeriod = salaryPeriods.length > 0 ? transactions.find(t => t.date < salaryPeriods[0].startDate) : transactions[0];
-    const transactionAfterLastSalaryPeriod = salaryPeriods.length > 0 ? transactions.find(t => t.date > salaryPeriods[salaryPeriods.length -1].endDate) : transactions[transactions.length -1];
-
-    if(transactionBeforeFirstSalaryPeriod){
+    if (salaryPeriods.length === 0) {
       const periodStartDate = transactions[0].date;
+      const periodEndDate = transactions[transactions.length - 1].date;
+
+      return [
+        {
+          startDate: periodStartDate,
+          endDate: periodEndDate,
+          label: this.dayFormatter.format(periodStartDate) + ' - ' + this.dayFormatter.format(periodEndDate)
+        }
+      ];
+    }
+
+    const transactionBeforeFirstSalaryPeriod = salaryPeriods.length > 0 ? transactions.filter(t => t.date < salaryPeriods[0].startDate).at(-1) : transactions[0];
+    const transactionAfterLastSalaryPeriod = salaryPeriods.length > 0 ? transactions.filter(t => t.date > salaryPeriods[salaryPeriods.length - 1].endDate).at(-1) : transactions[transactions.length - 1];
+
+    if (transactionBeforeFirstSalaryPeriod) {
+      const periodStartDate = transactions[0].date;
+      const periodEndDate = this.getDayBeforeAtMidnight(salaryPeriods[0].startDate);
 
       salaryPeriods = [
         {
-          label: this.monthFormatter.format(periodStartDate),
+          label: this.dayFormatter.format(periodStartDate) + ' - ' + this.dayFormatter.format(periodEndDate),
           startDate: periodStartDate,
-          endDate: this.getDayBeforeAtMidnight(salaryPeriods[0].startDate)
+          endDate: periodEndDate
         },
         ...salaryPeriods
       ]
     }
 
-    if(transactionAfterLastSalaryPeriod){
+    if (transactionAfterLastSalaryPeriod) {
       const lastPeriod = salaryPeriods[salaryPeriods.length - 1];
       const periodStartDate = this.nextDayAtMorning(lastPeriod.endDate);
+      const periodEndDate = transactions[transactions.length - 1].date;
 
       salaryPeriods = [
         ...salaryPeriods,
         {
-          label: this.monthFormatter.format(periodStartDate),
+          label: this.dayFormatter.format(periodStartDate) + ' - ' + this.dayFormatter.format(periodEndDate),
           startDate: periodStartDate,
-          endDate: transactions[transactions.length -1].date
+          endDate: periodEndDate
         },
       ]
     }
@@ -78,7 +97,7 @@ export class TransactionDecoratorService {
     return salaryPeriods;
   }
 
-  private getDayBeforeAtMidnight(date: Date){
+  private getDayBeforeAtMidnight(date: Date) {
     const updatedDate = new Date(date.getTime());
     updatedDate.setHours(23);
     updatedDate.setMinutes(59);
@@ -88,7 +107,7 @@ export class TransactionDecoratorService {
     return updatedDate;
   }
 
-  private nextDayAtMorning(date: Date){
+  private nextDayAtMorning(date: Date) {
     const updatedDate = new Date(date.getTime());
     updatedDate.setHours(0);
     updatedDate.setMinutes(0);
